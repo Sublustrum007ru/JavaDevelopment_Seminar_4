@@ -15,6 +15,7 @@ public class Application {
     private static void run() throws IOException {
         System.out.println("Runnig");
         Employee empl = new Employee();
-        empl.addNewEmployee();
+//        empl.addNewEmployee();
+        empl.readFile("Employee.txt");
     }
 } 

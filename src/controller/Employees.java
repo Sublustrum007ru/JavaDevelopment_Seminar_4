@@ -50,7 +50,7 @@ public class Employees {
 
     @Override
     public String toString(){
-        return String.format("Persannel Number: %d name: %s, phone: %s, Lenght or Srvice: %d", persannelNumber, name, phone, lenOfService);
+        return String.format("%d,%s,%s,%d", persannelNumber, name, phone, lenOfService);
     }
 
 }

@@ -5,6 +5,7 @@ import controller.Operation;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -32,7 +33,31 @@ public class Employee extends Employees implements Operation {
 
     @Override
     public void readFile(String path) {
+        File file = new File(PREFIX_PATH + path);
+        BufferedReader br = null;
+        List<Employee> temp = new ArrayList<>();
+        try{
+            br = new BufferedReader(new FileReader(file));
+            String line = br.readLine();
+            while((line) != null){
+                temp.add(createEmployee(line));
+                System.out.println(temp);
+                line = br.readLine();
+            }
+        }catch(IOException e){
+            System.out.println("Не возможно считать файл");
+        }
 
+    }
+
+    private Employee createEmployee(String str){
+        String[] temp = str.split(",");
+        for (int i = 0; i < temp.length; i++) {
+            System.out.println(temp[i]);
+        }
+        Employee test = new Employee(10, "aksdk", "23452345", 2);
+        Employee newEmployee = new Employee(Integer.parseInt(temp[0]), temp[1], temp[2], Integer.parseInt(temp[3]));
+        return newEmployee;
     }
 
     @Override
