@@ -7,6 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 
 public interface Operation{
-    void readFile(String path);
+    List<Employee> readFile(String path);
     void writeFile(String path) throws IOException;
 } 

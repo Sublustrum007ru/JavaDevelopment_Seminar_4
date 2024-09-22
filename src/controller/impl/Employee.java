@@ -2,6 +2,7 @@ package controller.impl;
 
 import controller.Employees;
 import controller.Operation;
+import util.Validator;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -25,63 +26,59 @@ public class Employee extends Employees implements Operation {
     public void addNewEmployee() throws IOException {
         System.out.print("Введите данные о работнике(Табельный номер, Имя, номер телефона, стаж работы) через пробел.\nВвод: ");
         Scanner scanner = new Scanner(System.in);
-        String[] line = scanner.nextLine().split(" ");
-        Employee temp = new Employee(Integer.parseInt(line[0]), line[1], line[2], Integer.parseInt(line[3]));
-        list.add(temp);
+        String line = scanner.nextLine();
+        Employee empl = createEmployee(line);
+        if(Validator.validEmpl(empl, readFile(PATH))){
+            System.out.println("ОШИБКА!!!\nЗапись с таким табельным номероу уже существует!!!\nПовторите ввод!!!\n");
+            addNewEmployee();
+        }
+        list.add(empl);
         writeFile(PATH);
+
     }
 
     @Override
-    public void readFile(String path) {
+    public List<Employee> readFile(String path) {
         File file = new File(PREFIX_PATH + path);
         BufferedReader br = null;
         List<Employee> temp = new ArrayList<>();
-        try{
+        try {
             br = new BufferedReader(new FileReader(file));
             String line = br.readLine();
-            while((line) != null){
+            while ((line) != null) {
                 temp.add(createEmployee(line));
-                System.out.println(temp);
+//                System.out.println(temp);
+//                System.out.println(line);
                 line = br.readLine();
             }
-        }catch(IOException e){
+        } catch (IOException e) {
             System.out.println("Не возможно считать файл");
         }
-
-    }
-
-    private Employee createEmployee(String str){
-        String[] temp = str.split(",");
-        for (int i = 0; i < temp.length; i++) {
-            System.out.println(temp[i]);
-        }
-        Employee test = new Employee(10, "aksdk", "23452345", 2);
-        Employee newEmployee = new Employee(Integer.parseInt(temp[0]), temp[1], temp[2], Integer.parseInt(temp[3]));
-        return newEmployee;
+        return temp;
     }
 
     @Override
     public void writeFile(String path) throws IOException {
         File file = new File(PREFIX_PATH + path);
         BufferedWriter bw = null;
-        try{
+        try {
             checkFile(file);
             bw = new BufferedWriter(new FileWriter(file, true));
             bw.write(list.toString().replace("[", "").replace("]", ""));
             bw.newLine();
             bw.flush();
-        }catch(Exception e){
+        } catch (Exception e) {
             System.out.println("Не возможно записать данные\nФайл или поврежден, или защищен от записи");
         }
     }
 
-    private void checkFile(File file){
-        if(!file.isFile()){
-            createFile(file);
-        }
+    private Employee createEmployee(String str) {
+        String[] temp = str.replace(" ", ",").split(",");
+        Employee newEmployee = new Employee(Integer.parseInt(temp[0]), temp[1], temp[2], Integer.parseInt(temp[3]));
+        return newEmployee;
     }
 
-    private void createFile(File file){
+    private void createFile(File file) {
         try {
             checkFolfer();
             if (!file.createNewFile()) {
@@ -90,6 +87,12 @@ public class Employee extends Employees implements Operation {
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
+        }
+    }
+
+    private void checkFile(File file) {
+        if (!file.isFile()) {
+            createFile(file);
         }
     }
 
