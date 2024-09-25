@@ -2,59 +2,58 @@ package controller.impl;
 
 import controller.Employees;
 import controller.Operation;
-import util.Validator;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Employee extends Employees implements Operation {
 
-    private static final String PREFIX_PATH = "src/List/";
-    private static final String PATH = "Employee.txt";
-    private List<Employee> list = new ArrayList<>();
+    private String PREFIX_PATH = "src/List/";
+    private String PATH = "Employee.txt";
+    public HashMap<Integer, Employee> map = new HashMap<>();
 
-    public Employee(int persannelNumber, String name, String phone, int lenOfService) {
-        super(persannelNumber, name, phone, lenOfService);
+    public Employee(String name, String phone, int lenOfService) {
+        super(name, phone, lenOfService);
     }
 
     public Employee() {
     }
 
+    /**
+     * Метод добавления нового сотрудника. Данные берутся из строки введенной пользователем.
+     *
+     * @throws IOException
+     */
     public void addNewEmployee() throws IOException {
-        System.out.print("Введите данные о работнике(Табельный номер, Имя, номер телефона, стаж работы) через пробел.\nВвод: ");
+        map = readFile(PATH);
+        System.out.print("Введите данные о работнике(Имя, номер телефона, стаж работы) через пробел.\nВвод: ");
         Scanner scanner = new Scanner(System.in);
         String line = scanner.nextLine();
-        Employee empl = createEmployee(line);
-        if(Validator.validEmpl(empl, readFile(PATH))){
-            System.out.println("ОШИБКА!!!\nЗапись с таким табельным номероу уже существует!!!\nПовторите ввод!!!\n");
-            addNewEmployee();
+        int index = createPersannelNumber();
+        if (map.get(index) == null && index < map.size()) {
+            map.replace(index, map.get(index), createEmployeeInput(line));
+        } else {
+            map.put(index, createEmployeeInput(line));
         }
-        list.add(empl);
         writeFile(PATH);
-
     }
 
     @Override
-    public List<Employee> readFile(String path) {
+    public HashMap<Integer, Employee> readFile(String path) {
         File file = new File(PREFIX_PATH + path);
         BufferedReader br = null;
-        List<Employee> temp = new ArrayList<>();
+        HashMap<Integer, Employee> result = new HashMap<>();
         try {
             br = new BufferedReader(new FileReader(file));
             String line = br.readLine();
             while ((line) != null) {
-                temp.add(createEmployee(line));
-//                System.out.println(temp);
-//                System.out.println(line);
+                result.put(createPersannelNumber(line), createEmployeeFile(line));
                 line = br.readLine();
             }
         } catch (IOException e) {
-            System.out.println("Не возможно считать файл");
+            System.out.println(e);
         }
-        return temp;
+        return result;
     }
 
     @Override
@@ -63,19 +62,107 @@ public class Employee extends Employees implements Operation {
         BufferedWriter bw = null;
         try {
             checkFile(file);
-            bw = new BufferedWriter(new FileWriter(file, true));
-            bw.write(list.toString().replace("[", "").replace("]", ""));
-            bw.newLine();
+            bw = new BufferedWriter(new FileWriter(file));
+            for (Map.Entry<Integer, Employee> entry : map.entrySet()) {
+                bw.write(entry.getKey() + "," + entry.getValue());
+                bw.newLine();
+            }
             bw.flush();
-        } catch (Exception e) {
-            System.out.println("Не возможно записать данные\nФайл или поврежден, или защищен от записи");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                bw.close();
+            } catch (Exception e) {
+            }
         }
     }
 
-    private Employee createEmployee(String str) {
-        String[] temp = str.replace(" ", ",").split(",");
-        Employee newEmployee = new Employee(Integer.parseInt(temp[0]), temp[1], temp[2], Integer.parseInt(temp[3]));
-        return newEmployee;
+    /**
+     * Метод генерации табельного номера с читанного из файла.
+     *
+     * @param line - строка считанная из файла.
+     * @return - возвращаем табельный номер.
+     */
+    private int createPersannelNumber(String line) {
+        int result = 0;
+        String[] str = line.split(",");
+        result = Integer.parseInt(str[0]);
+        return result;
+    }
+
+    /**
+     * Метод генерации табельного номера при вводе данных о новом сотруднике в терминал
+     *
+     * @return - возвращаем табельный номер.
+     */
+    private int createPersannelNumber() {
+        int result = 0;
+        if (getKey(map, "null") != map.size()) {
+            result = getKey(map, "null");
+        }else {
+            result = map.size() + 1;
+        }
+        return result;
+    }
+
+    /**
+     * Метод получения свободного табельного номера на основе уже существующего списка сотрудников.
+     *
+     * @param maping - список всех сотрудников.
+     * @param value  - искомое значение. По не проверяем если в списке табельный номер содержит запись равную value.
+     * @return - возвращаем табельный номер.
+     */
+    private int getKey(HashMap<Integer, Employee> maping, String value) {
+        Set<Integer> keys = maping.keySet();
+        int result = 0;
+        for (Integer key : keys) {
+            if (maping.get(key) == null) {
+                result = key;
+            }else{
+                result = keys.size() + 1;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Этот метод создает сотрудника из строки считанной из файла.
+     *
+     * @param line - переданная строка, считанная из файла.
+     * @return - возвращаем созданного сотрудника.
+     */
+    private Employee createEmployeeFile(String line) {
+        String[] str = line.split(",");
+        Employee result = null;
+        if (!str[1].equals("null")) {
+            result = new Employee(str[1], str[2], Integer.parseInt(str[3]));
+        }
+        return result;
+    }
+
+    /**
+     * Этот етод создаент сотрудника из строки введенной пользователем в терминал.
+     *
+     * @param line - строка введенная пользователем.
+     * @return - возвращаем созданного пользователя.
+     */
+    private Employee createEmployeeInput(String line) throws IOException {
+        String[] str = line.split(" ");
+        Employee result = null;
+        if (str.length != 3) {
+            System.out.println("ОШИБКА!!! Не верное колличество аргументов\nПовторите ввод");
+            addNewEmployee();
+        } else {
+            result = new Employee(str[0], str[1], Integer.parseInt(str[2]));
+        }
+        return result;
+    }
+
+    private void checkFile(File file) {
+        if (!file.isFile()) {
+            createFile(file);
+        }
     }
 
     private void createFile(File file) {
@@ -90,11 +177,6 @@ public class Employee extends Employees implements Operation {
         }
     }
 
-    private void checkFile(File file) {
-        if (!file.isFile()) {
-            createFile(file);
-        }
-    }
 
     private void checkFolfer() {
         File theDir = new File(PREFIX_PATH);
@@ -103,3 +185,4 @@ public class Employee extends Employees implements Operation {
         }
     }
 }
+
